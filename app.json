@@ -1,7 +1,7 @@
 {
-  "name": "❤️𝐑_𝐎_𝐁_𝐈_𝐍❤️",
-  "description": "Powerful whatsapp bot made by sihilel",
-  "logo": "https://telegra.ph/file/ad25b2227fa2a1a01b707.jpg",
+  "name": "Firefox 🎀",
+  "description": "Powerful whatsapp bot made by Dineth",
+  "logo": "https://i.postimg.cc/SKWWycnC/2f219c4e-35ba-41b3-bb11-91fdfe78291f.jpg",
   "keywords": ["bot"],
   "success_url": "/",
 
@@ -12,12 +12,12 @@
     },  
 
     "ALIVE_IMG": {
-      "description": "Put your alive img here.",
+      "description": "https://i.postimg.cc/SKWWycnC/2f219c4e-35ba-41b3-bb11-91fdfe78291f.jpg",
       "required": true
     },
     
     "ALIVE_MSG": {
-      "description": "Put your alive msg here.",
+      "description": "Hi, im online now 🎀🎗️.",
       "required": true
     }   
 },
