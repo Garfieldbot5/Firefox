@@ -70,7 +70,7 @@ async function connectToWA() {
   const robin = makeWASocket({
     logger: P({ level: "silent" }),
     printQRInTerminal: false,
-    browser: Browsers.macOS("Firefox"),
+    browser: Browsers.macOS("Microsoft edge"),
     syncFullHistory: true,
     auth: state,
     version,
