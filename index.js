@@ -23,6 +23,7 @@ async function startBot() {
 
   // 👇 MESSAGE LISTENER (THIS IS THE KEY)
   sock.ev.on('messages.upsert', async ({ messages }) => {
+    console.log('📩 MESSAGE RECEIVED')
     console.log('📥 messages.upsert fired')
 
     const msg = messages[0]
