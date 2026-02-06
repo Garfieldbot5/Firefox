@@ -1,10 +1,10 @@
-import commandHandler from './command.js'
-
-console.log('🔥 index.js loaded')
-
 import makeWASocket, {
   useMultiFileAuthState
 } from '@whiskeysockets/baileys'
+
+import commandHandler from './command.js'
+
+console.log('🔥 Bot starting...')
 
 async function startBot() {
   const { state, saveCreds } =
@@ -23,14 +23,12 @@ async function startBot() {
     }
   })
 
-  // ✅ ONE message listener ONLY
+  // ✅ ONLY ONE MESSAGE LISTENER
   sock.ev.on('messages.upsert', async ({ messages }) => {
-    console.log('📥 messages.upsert fired')
-
     const msg = messages[0]
     if (!msg || !msg.message || msg.key.fromMe) return
 
-    // 👇 pass message to command.js
+    // pass message to command handler
     await commandHandler(sock, msg)
   })
 }
