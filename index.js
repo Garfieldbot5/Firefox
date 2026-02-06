@@ -1,61 +1,54 @@
-import makeWASocket, {
-  useMultiFileAuthState,
-  DisconnectReason
-} from '@whiskeysockets/baileys'
-import { Boom } from '@hapi/boom'
-import readline from 'readline'
+const { default: makeWASocket, useMultiFileAuthState } = require("@whiskeysockets/baileys")
+const express = require("express")
+const QRCode = require("qrcode")
 
-const rl = readline.createInterface({
-  input: process.stdin,
-  output: process.stdout
-})
+const app = express()
+let qrCodeData = null
 
-async function startBot () {
-  const { state, saveCreds } =
-    await useMultiFileAuthState('./session')
+async function startBot() {
+    const { state, saveCreds } = await useMultiFileAuthState("auth")
 
-  const sock = makeWASocket({
-    auth: state,
-    printQRInTerminal: false // IMPORTANT
-  })
+    const sock = makeWASocket({
+        auth: state
+    })
 
-  sock.ev.on('creds.update', saveCreds)
+    sock.ev.on("creds.update", saveCreds)
 
-  // 🔑 PAIRING CODE FLOW
-  if (!sock.authState.creds.registered) {
-    rl.question(
-      'Enter WhatsApp number (with country code): ',
-      async (number) => {
-        number = number.replace(/[^0-9]/g, '')
+    sock.ev.on("connection.update", async (update) => {
+        const { qr, connection } = update
 
-        const code = await sock.requestPairingCode(number)
-        console.log('📲 Pairing Code:', code)
-        console.log('Open WhatsApp → Linked Devices → Link with phone number')
-        rl.close()
-      }
-    )
-  }
+        if (qr) {
+            qrCodeData = await QRCode.toDataURL(qr)
+        }
 
-  sock.ev.on('connection.update', (update) => {
-    const { connection, lastDisconnect } = update
-
-    if (connection === 'open') {
-      console.log('✅ WhatsApp linked successfully')
-    }
-
-    if (connection === 'close') {
-      const reason = new Boom(
-        lastDisconnect?.error
-      )?.output?.statusCode
-
-      if (reason !== DisconnectReason.loggedOut) {
-        console.log('🔄 Reconnecting...')
-        startBot()
-      } else {
-        console.log('❌ Logged out, pairing required again')
-      }
-    }
-  })
+        if (connection === "open") {
+            console.log("✅ WhatsApp Bot Connected")
+            qrCodeData = null
+        }
+    })
 }
 
 startBot()
+
+
+app.get("/", (req, res) => {
+    res.send(`
+        <html>
+        <head>
+            <title>WhatsApp Bot Login</title>
+        </head>
+        <body style="text-align:center;">
+            <h2>Scan QR Code</h2>
+            ${qrCodeData ? `<img src="${qrCodeData}" />` : "<p>Bot Connected ✅</p>"}
+            <script>
+                setTimeout(() => location.reload(), 3000)
+            </script>
+        </body>
+        </html>
+    `)
+})
+
+app.listen(3000, () => {
+    console.log("🌐 Website running on http://localhost:3000")
+})
+
