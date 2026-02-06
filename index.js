@@ -3,16 +3,7 @@ import makeWASocket, {
   DisconnectReason
 } from "@whiskeysockets/baileys"
 
-import express from "express"
 import readline from "readline"
-
-const app = express()
-const PORT = 3000
-
-let pairedOnce = false
-let pairingCode = null
-
-console.log("🚀 index.js loaded")
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -28,44 +19,42 @@ async function startBot() {
   })
 
   sock.ev.on("creds.update", saveCreds)
-  
-  if (!sock.authState.creds.registered) {
-    rl.question(
-      "📱 Enter WhatsApp number (countrycode + number): ",
-      async (number) => {
-        const code = await sock.requestPairingCode(number)
-        console.log("🔢 PAIR CODE:", code)
-        rl.close()
-      }
-    )
-  }
+
+  let askedForCode = false
 
   sock.ev.on("connection.update", async (update) => {
     const { connection, lastDisconnect } = update
 
     if (connection === "open") {
-      console.log("✅ WhatsApp Connected")
+      console.log("✅ Connected to WhatsApp")
 
-      if (!pairedOnce) {
-        pairedOnce = true
-        const myJid = sock.user?.id
+      if (!sock.authState.creds.registered && !askedForCode) {
+        askedForCode = true
 
-        if (myJid) {
-          await sock.sendMessage(myJid, {
-            text: "✅ Bot successfully paired & connected"
-          })
-        }
+        rl.question(
+          "📱 Enter WhatsApp number (countrycode + number): ",
+          async (number) => {
+            try {
+              const code = await sock.requestPairingCode(number)
+              console.log("🔢 PAIR CODE:", code)
+            } catch (err) {
+              console.error("❌ Failed to get pair code:", err.message)
+            } finally {
+              rl.close()
+            }
+          }
+        )
       }
     }
 
     if (connection === "close") {
-      const statusCode = lastDisconnect?.error?.output?.statusCode
+      const reason = lastDisconnect?.error?.output?.statusCode
 
-      if (statusCode === DisconnectReason.loggedOut) {
-        console.log("❌ Logged out. Delete session & relink.")
-        pairedOnce = false
+      if (reason !== DisconnectReason.loggedOut) {
+        console.log("🔄 Reconnecting...")
+        startBot()
       } else {
-        console.log("⚠️ Connection closed. Restart app if needed.")
+        console.log("❌ Logged out. Delete session folder and relink.")
       }
     }
   })
@@ -73,7 +62,6 @@ async function startBot() {
 
 startBot()
 
-/* 🌐 WEBSITE: SHOW LINK CODE */
 app.get("/code", (req, res) => {
   if (!pairingCode) {
     return res.send("Pairing code not generated yet.")
