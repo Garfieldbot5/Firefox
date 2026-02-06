@@ -23,12 +23,10 @@ async function startBot() {
     }
   })
 
-  // ✅ ONLY ONE MESSAGE LISTENER
   sock.ev.on('messages.upsert', async ({ messages }) => {
     const msg = messages[0]
     if (!msg || !msg.message || msg.key.fromMe) return
 
-    // pass message to command handler
     await commandHandler(sock, msg)
   })
 }
