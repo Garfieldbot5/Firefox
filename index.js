@@ -4,31 +4,42 @@ import makeWASocket, {
 } from "@whiskeysockets/baileys"
 
 import express from "express"
-import QRCode from "qrcode"
+import readline from "readline"
 
 const app = express()
-let latestQR = null
+const PORT = 3000
+
 let pairedOnce = false
+let pairingCode = null
 
 console.log("🚀 index.js loaded")
+
+const rl = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout
+})
 
 async function startBot() {
   const { state, saveCreds } = await useMultiFileAuthState("./session")
 
   const sock = makeWASocket({
     auth: state,
-    printQRInTerminal: true
+    printQRInTerminal: false // ❌ NO QR
   })
 
   sock.ev.on("creds.update", saveCreds)
 
-  sock.ev.on("connection.update", async (update) => {
-    const { connection, lastDisconnect, qr } = update
+  // 🔗 REQUEST LINK CODE (ONLY ON FIRST PAIR)
+  if (!sock.authState.creds.registered) {
+    rl.question("📱 Enter WhatsApp number (countrycode + number): ", async (number) => {
+      pairingCode = await sock.requestPairingCode(number)
+      console.log("🔢 WhatsApp Link Code:", pairingCode)
+      rl.close()
+    })
+  }
 
-    if (qr) {
-      latestQR = qr
-      console.log("📸 QR received")
-    }
+  sock.ev.on("connection.update", async (update) => {
+    const { connection, lastDisconnect } = update
 
     if (connection === "open") {
       console.log("✅ WhatsApp Connected")
@@ -52,7 +63,7 @@ async function startBot() {
         console.log("🔄 Reconnecting...")
         startBot()
       } else {
-        console.log("❌ Logged out. Scan QR again.")
+        console.log("❌ Logged out. Delete session & relink.")
         pairedOnce = false
       }
     }
@@ -61,21 +72,19 @@ async function startBot() {
 
 startBot()
 
-/* 🌐 WEBSITE: show QR */
-app.get("/qr", async (req, res) => {
-  if (!latestQR) {
-    return res.send("QR not ready yet. Refresh...")
+/* 🌐 WEBSITE: SHOW LINK CODE (OPTIONAL) */
+app.get("/code", (req, res) => {
+  if (!pairingCode) {
+    return res.send("Pairing code not generated yet.")
   }
 
-  const qrImage = await QRCode.toDataURL(latestQR)
-
   res.send(`
-    <h2>Scan WhatsApp QR</h2>
-    <img src="${qrImage}" />
-    <script>setTimeout(()=>location.reload(),3000)</script>
+    <h2>WhatsApp Link Code</h2>
+    <h1>${pairingCode}</h1>
+    <p>Open WhatsApp → Linked Devices → Link with phone number</p>
   `)
 })
 
-app.listen(3000, () => {
-  console.log("🌐 Open http://localhost:3000/qr")
+app.listen(PORT, () => {
+  console.log(`🌐 Open http://localhost:${PORT}/code`)
 })
