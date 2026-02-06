@@ -1,3 +1,5 @@
+import { PREFIX, OWNER } from './config.js'
+
 export default async function commandHandler(sock, msg) {
   const jid = msg.key.remoteJid
 
@@ -6,10 +8,14 @@ export default async function commandHandler(sock, msg) {
     msg.message.extendedTextMessage?.text
 
   if (!text) return
-  if (!text.startsWith('!')) return
+  if (!text.startsWith(PREFIX)) return
 
-  const args = text.slice(1).trim().split(/ +/)
+  const args = text.slice(PREFIX.length).trim().split(/ +/)
   const command = args.shift().toLowerCase()
+
+const delay = Math.floor(Math.random() * 1000) + 800
+await new Promise(r => setTimeout(r, delay))
+
 
   // 🧾 MENU
   if (command === 'menu') {
@@ -20,6 +26,10 @@ export default async function commandHandler(sock, msg) {
 • !ping
 • !menu
 • !alive
+
+👑 *Owner*
+• !botpublic
+• !botprivate
 
 🌐 *Social*
 • !yt
@@ -68,3 +78,31 @@ Contact - wa/me+94775473247
     await sock.sendMessage(jid, { text: '🔞 xnxx https://en.xnxx.place/search/videoname' })
   }
 }
+
+// 🔐 PRIVATE CHAT ONLY
+ else if (command === 'botprivate') {
+  if (!isOwner) return
+
+  BOT_MODE = 'private'
+  await sock.sendMessage(jid, { text: '🔒 Bot is now PRIVATE' })
+}
+
+else if (command === 'botpublic') {
+  if (!isOwner) return
+
+  BOT_MODE = 'public'
+  await sock.sendMessage(jid, { text: '🔓 Bot is now PUBLIC' })
+}
+
+
+  // 👑 OWNER ONLY
+  else if (command === 'shutdown') {
+    if (!isOwner) {
+      return sock.sendMessage(jid, {
+        text: '❌ Owner only command'
+      })
+    }
+
+    await sock.sendMessage(jid, { text: 'Bot shutting down...' })
+    process.exit(0)
+  }
