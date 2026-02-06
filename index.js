@@ -37,6 +37,7 @@ async function startBot() {
             try {
               const code = await sock.requestPairingCode(number)
               console.log("🔢 PAIR CODE:", code)
+              console.log("📲 WhatsApp → Linked Devices → Link with phone number")
             } catch (err) {
               console.error("❌ Failed to get pair code:", err.message)
             } finally {
@@ -61,19 +62,3 @@ async function startBot() {
 }
 
 startBot()
-
-app.get("/code", (req, res) => {
-  if (!pairingCode) {
-    return res.send("Pairing code not generated yet.")
-  }
-
-  res.send(`
-    <h2>WhatsApp Link Code</h2>
-    <h1>${pairingCode}</h1>
-    <p>Open WhatsApp → Linked Devices → Link with phone number</p>
-  `)
-})
-
-app.listen(PORT, () => {
-  console.log(`🌐 Open http://localhost:${PORT}/code`)
-})
