@@ -59,11 +59,7 @@ async function startBot() {
     if (connection === "close") {
       const statusCode = lastDisconnect?.error?.output?.statusCode
 
-     if (statusCode !== DisconnectReason.loggedOut) {
-  console.log("⚠️ Connection lost. Waiting...")
-} else {
-  console.log("❌ Logged out. Delete session & restart.")
-} else {
+      } else {
         console.log("❌ Logged out. Delete session & relink.")
         pairedOnce = false
       }
