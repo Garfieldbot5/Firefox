@@ -22,56 +22,49 @@ async function startBot() {
   })
 
   // 👇 COMMAND HANDLER
- sock.ev.on('messages.upsert', async ({ messages }) => {
+sock.ev.on('messages.upsert', async ({ messages }) => {
   const msg = messages[0]
-  if (!msg.message || msg.key.fromMe) return
+  if (!msg || !msg.message || msg.key.fromMe) return
 
-  // 🛑 Anti-spam
-  const sender = msg.key.participant || msg.key.remoteJid
-  const now = Date.now()
-
-  if (userCooldown[sender] && now - userCooldown[sender] < 5000) return
-  userCooldown[sender] = now
-
+  // ✅ READ MESSAGE TEXT SAFELY
   const text =
     msg.message.conversation ||
-    msg.message.extendedTextMessage?.text
+    msg.message.extendedTextMessage?.text ||
+    msg.message.imageMessage?.caption ||
+    msg.message.videoMessage?.caption
 
-  if (!text || !text.startsWith('!')) return
+  if (!text) return
 
-  const command = text.slice(1).toLowerCase()
+  console.log('📩 Message:', text) // DEBUG (IMPORTANT)
 
+  // ✅ COMMAND PREFIX
+  const prefix = '!'
+  if (!text.startsWith(prefix)) return
+
+  const command = text.slice(prefix.length).trim().toLowerCase()
+
+  // ✅ COMMANDS
   if (command === 'ping') {
     await delay(randomDelay(1500, 3000))
-    await sock.sendMessage(msg.key.remoteJid, {
+    return sock.sendMessage(msg.key.remoteJid, {
       text: 'pong 🏓'
+    })
+  }
+
+  else if (command === 'menu') {
+    await delay(randomDelay(1500, 3000))
+    return sock.sendMessage(msg.key.remoteJid, {
+      text: '🤖 Menu:\n!ping\n!menu\n!help'
+    })
+  }
+
+  else if (command === 'help') {
+    return sock.sendMessage(msg.key.remoteJid, {
+      text: 'Type !menu to see commands'
     })
   }
 })
 
-    else if (command === 'menu') {
-      await sock.sendMessage(msg.key.remoteJid, {
-        text:
-`🤖 *BOT MENU*
-!ping – test bot
-!menu – show menu
-!help – help info`
-      })
-    }
-
-    else if (command === 'help') {
-      await sock.sendMessage(msg.key.remoteJid, {
-        text: 'Type !menu to see all commands'
-      })
-    }
-
-    else {
-      await sock.sendMessage(msg.key.remoteJid, {
-        text: '❌ Unknown command. Type !menu'
-      })
-    }
-  })
-}
 
 startBot()
 
