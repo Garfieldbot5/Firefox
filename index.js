@@ -24,18 +24,21 @@ async function startBot() {
 
   const sock = makeWASocket({
     auth: state,
-    printQRInTerminal: false // ❌ NO QR
+    printQRInTerminal: false
   })
 
   sock.ev.on("creds.update", saveCreds)
 
-  // 🔗 REQUEST LINK CODE (ONLY ON FIRST PAIR)
+  // 🔗 REQUEST LINK CODE (ONLY FIRST TIME)
   if (!sock.authState.creds.registered) {
-    rl.question("📱 Enter WhatsApp number (countrycode + number): ", async (number) => {
-      pairingCode = await sock.requestPairingCode(number)
-      console.log("🔢 WhatsApp Link Code:", pairingCode)
-      rl.close()
-    })
+    rl.question(
+      "📱 Enter WhatsApp number (countrycode + number): ",
+      async (number) => {
+        pairingCode = await sock.requestPairingCode(number)
+        console.log("🔢 WhatsApp Link Code:", pairingCode)
+        rl.close()
+      }
+    )
   }
 
   sock.ev.on("connection.update", async (update) => {
@@ -59,9 +62,11 @@ async function startBot() {
     if (connection === "close") {
       const statusCode = lastDisconnect?.error?.output?.statusCode
 
-      } else {
+      if (statusCode === DisconnectReason.loggedOut) {
         console.log("❌ Logged out. Delete session & relink.")
         pairedOnce = false
+      } else {
+        console.log("⚠️ Connection closed. Restart app if needed.")
       }
     }
   })
@@ -69,7 +74,7 @@ async function startBot() {
 
 startBot()
 
-/* 🌐 WEBSITE: SHOW LINK CODE (OPTIONAL) */
+/* 🌐 WEBSITE: SHOW LINK CODE */
 app.get("/code", (req, res) => {
   if (!pairingCode) {
     return res.send("Pairing code not generated yet.")
