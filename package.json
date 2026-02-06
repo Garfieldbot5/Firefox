@@ -2,8 +2,8 @@
   "name": "firefox",
   "version": "1.0.0",
   "type": "module",
-  "main": "index.js",
-  "scripts": {
+  "dependencies": {
+    "@whiskeysockets/baileys": "^7.0.0"
     "start": "node index.js"
   }
 }
