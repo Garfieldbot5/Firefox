@@ -1,4 +1,4 @@
-module.exports = async (sock, msg) => {
+export default async function commandHandler(sock, msg) {
   const text =
     msg.message?.conversation ||
     msg.message?.extendedTextMessage?.text ||
@@ -9,13 +9,11 @@ module.exports = async (sock, msg) => {
 
   console.log('📩 Received:', text)
 
-  // prefix
-  const prefix = ','
+  const prefix = '!'
   if (!text.startsWith(prefix)) return
 
   const command = text.slice(1).trim().toLowerCase()
 
-  // 🧩 COMMANDS
   if (command === 'ping') {
     await sock.sendMessage(msg.key.remoteJid, {
       text: 'pong 🏓'
