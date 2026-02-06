@@ -1,3 +1,5 @@
+console.log('🔥 index.js started')
+
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms))
 
 import makeWASocket, {
@@ -38,7 +40,7 @@ sock.ev.on('messages.upsert', async ({ messages }) => {
   console.log('📩 Message:', text) // DEBUG (IMPORTANT)
 
   // ✅ COMMAND PREFIX
-  const prefix = '!'
+  const prefix = ','
   if (!text.startsWith(prefix)) return
 
   const command = text.slice(prefix.length).trim().toLowerCase()
