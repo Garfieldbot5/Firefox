@@ -1,9 +1,8 @@
 {
-  "name": "firefox",
+  "name": "firefox-bot",
   "version": "1.0.0",
   "type": "module",
   "dependencies": {
     "@whiskeysockets/baileys": "^7.0.0"
-    "start": "node index.js"
   }
 }
