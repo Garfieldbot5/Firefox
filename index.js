@@ -28,14 +28,13 @@ async function startBot() {
   })
 
   sock.ev.on("creds.update", saveCreds)
-
-  // 🔗 REQUEST LINK CODE (ONLY FIRST TIME)
+  
   if (!sock.authState.creds.registered) {
     rl.question(
       "📱 Enter WhatsApp number (countrycode + number): ",
       async (number) => {
-        pairingCode = await sock.requestPairingCode(number)
-        console.log("🔢 WhatsApp Link Code:", pairingCode)
+        const code = await sock.requestPairingCode(number)
+        console.log("🔢 PAIR CODE:", code)
         rl.close()
       }
     )
