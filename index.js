@@ -1,3 +1,5 @@
+import commandHandler from './command.js'
+
 console.log('🔥 index.js loaded')
 
 import makeWASocket, {
@@ -21,10 +23,18 @@ async function startBot() {
     }
   })
 
-  // 👇 MESSAGE LISTENER (THIS IS THE KEY)
+  
   sock.ev.on('messages.upsert', async ({ messages }) => {
     console.log('📩 MESSAGE RECEIVED')
     console.log('📥 messages.upsert fired')
+
+    sock.ev.on('messages.upsert', async ({ messages }) => {
+  const msg = messages[0]
+  if (!msg || !msg.message || msg.key.fromMe) return
+
+  
+  await commandHandler(sock, msg)
+})
 
     const msg = messages[0]
     if (!msg || !msg.message) {
