@@ -48,17 +48,5 @@ async function startBot() {
       }
     }
 
-    if (connection === "close") {
-      const reason = lastDisconnect?.error?.output?.statusCode
-
-      if (reason !== DisconnectReason.loggedOut) {
-        console.log("🔄 Reconnecting...")
-        startBot()
-      } else {
-        console.log("❌ Logged out. Delete session folder and relink.")
-      }
-    }
-  })
-}
-
-startBot()
+    
+  startBot()
