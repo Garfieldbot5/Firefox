@@ -1,53 +1,80 @@
-const { default: makeWASocket, useMultiFileAuthState } = require("@whiskeysockets/baileys")
-const express = require("express")
-const QRCode = require("qrcode")
+const delay = ms => new Promise(resolve => setTimeout(resolve, ms))
 
-const app = express()
-let qrCodeData = null
-
-app.get("/qr", async (req, res) => {
-
-    if (!latestQR) {
-        return res.send("QR not ready yet")
-    }
-
-    const qrImage = await QRCode.toDataURL(latestQR)
-
-    res.send(`
-        <h2>Scan QR</h2>
-        <img src="${qrImage}" />
-        <script>setTimeout(()=>location.reload(),3000)</script>
-    `)
-})
-
+import makeWASocket, {
+  useMultiFileAuthState
+} from '@whiskeysockets/baileys'
 
 async function startBot() {
-    const { state, saveCreds } = await useMultiFileAuthState("auth")
+  const { state, saveCreds } =
+    await useMultiFileAuthState('./session')
 
-    const sock = makeWASocket({
-        auth: state
-        printQRInTerminal: false
-    
+  const sock = makeWASocket({
+    auth: state,
+    printQRInTerminal: true
+  })
+
+  sock.ev.on('creds.update', saveCreds)
+
+  sock.ev.on('connection.update', ({ connection }) => {
+    if (connection === 'open') {
+      console.log('✅ WhatsApp connected')
+    }
+  })
+
+  // 👇 COMMAND HANDLER
+ sock.ev.on('messages.upsert', async ({ messages }) => {
+  const msg = messages[0]
+  if (!msg.message || msg.key.fromMe) return
+
+  // 🛑 Anti-spam
+  const sender = msg.key.participant || msg.key.remoteJid
+  const now = Date.now()
+
+  if (userCooldown[sender] && now - userCooldown[sender] < 5000) return
+  userCooldown[sender] = now
+
+  const text =
+    msg.message.conversation ||
+    msg.message.extendedTextMessage?.text
+
+  if (!text || !text.startsWith('!')) return
+
+  const command = text.slice(1).toLowerCase()
+
+  if (command === 'ping') {
+    await delay(randomDelay(1500, 3000))
+    await sock.sendMessage(msg.key.remoteJid, {
+      text: 'pong 🏓'
     })
-
-    sock.ev.on("connection.update", async (update) => {
-  const { connection, qr } = update
-
-  if (qr) {
-    console.log("📱 QR received")
-  }
-
-  if (connection === "open") {
-    console.log("✅ WhatsApp connected")
-  }
-
-  if (connection === "close") {
-    console.log("❌ WhatsApp disconnected")
   }
 })
+
+    else if (command === 'menu') {
+      await sock.sendMessage(msg.key.remoteJid, {
+        text:
+`🤖 *BOT MENU*
+!ping – test bot
+!menu – show menu
+!help – help info`
+      })
+    }
+
+    else if (command === 'help') {
+      await sock.sendMessage(msg.key.remoteJid, {
+        text: 'Type !menu to see all commands'
+      })
+    }
+
+    else {
+      await sock.sendMessage(msg.key.remoteJid, {
+        text: '❌ Unknown command. Type !menu'
+      })
+    }
+  })
 }
 
 startBot()
+
 
 app.get("/", (req, res) => {
     res.send(`
