@@ -1,6 +1,5 @@
 import makeWASocket, {
-  useMultiFileAuthState,
-  DisconnectReason
+  useMultiFileAuthState
 } from "@whiskeysockets/baileys"
 
 import readline from "readline"
@@ -20,16 +19,14 @@ async function startBot() {
 
   sock.ev.on("creds.update", saveCreds)
 
-  let askedForCode = false
+  let asked = false
 
-  sock.ev.on("connection.update", async (update) => {
-    const { connection, lastDisconnect } = update
-
+  sock.ev.on("connection.update", async ({ connection }) => {
     if (connection === "open") {
-      console.log("✅ Connected to WhatsApp")
+      console.log("✅ WhatsApp connected")
 
-      if (!sock.authState.creds.registered && !askedForCode) {
-        askedForCode = true
+      if (!sock.authState.creds.registered && !asked) {
+        asked = true
 
         rl.question(
           "📱 Enter WhatsApp number (countrycode + number): ",
@@ -38,8 +35,8 @@ async function startBot() {
               const code = await sock.requestPairingCode(number)
               console.log("🔢 PAIR CODE:", code)
               console.log("📲 WhatsApp → Linked Devices → Link with phone number")
-            } catch (err) {
-              console.error("❌ Failed to get pair code:", err.message)
+            } catch {
+              console.log("❌ Failed to get pairing code")
             } finally {
               rl.close()
             }
@@ -47,6 +44,7 @@ async function startBot() {
         )
       }
     }
+  })
+}
 
-    
-  startBot()
+startBot()
