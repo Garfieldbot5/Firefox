@@ -23,41 +23,15 @@ async function startBot() {
     }
   })
 
-  
+  // ✅ ONE message listener ONLY
   sock.ev.on('messages.upsert', async ({ messages }) => {
-    console.log('📩 MESSAGE RECEIVED')
     console.log('📥 messages.upsert fired')
 
-    sock.ev.on('messages.upsert', async ({ messages }) => {
-  const msg = messages[0]
-  if (!msg || !msg.message || msg.key.fromMe) return
-
-  
-  await commandHandler(sock, msg)
-})
-
     const msg = messages[0]
-    if (!msg || !msg.message) {
-      console.log('❌ No message content')
-      return
-    }
+    if (!msg || !msg.message || msg.key.fromMe) return
 
-    if (msg.key.fromMe) {
-      console.log('↩️ Ignored own message')
-      return
-    }
-
-    const text =
-      msg.message.conversation ||
-      msg.message.extendedTextMessage?.text
-
-    console.log('📩 TEXT:', text)
-
-    if (text === '!ping') {
-      await sock.sendMessage(msg.key.remoteJid, {
-        text: 'pong 🏓'
-      })
-    }
+    // 👇 pass message to command.js
+    await commandHandler(sock, msg)
   })
 }
 
