@@ -5,6 +5,22 @@ const QRCode = require("qrcode")
 const app = express()
 let qrCodeData = null
 
+app.get("/qr", async (req, res) => {
+
+    if (!latestQR) {
+        return res.send("QR not ready yet")
+    }
+
+    const qrImage = await QRCode.toDataURL(latestQR)
+
+    res.send(`
+        <h2>Scan QR</h2>
+        <img src="${qrImage}" />
+        <script>setTimeout(()=>location.reload(),3000)</script>
+    `)
+})
+
+
 async function startBot() {
     const { state, saveCreds } = await useMultiFileAuthState("auth")
 
@@ -19,7 +35,6 @@ async function startBot() {
 
   if (qr) {
     console.log("📱 QR received")
-    // save QR so website can show it
   }
 
   if (connection === "open") {
