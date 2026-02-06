@@ -4,9 +4,6 @@ import QRCode from "qrcode"
 
 let pairedOnce = false
 
-import commandHandler from './command.js'
-import makeWASocket, { useMultiFileAuthState } from '@whiskeysockets/baileys'
-
 console.log('🔥 index.js loaded')
 
 async function startBot() {
