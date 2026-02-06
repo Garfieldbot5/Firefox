@@ -31,9 +31,7 @@ async function startBot() {
 
         if (connection === "open") {
             console.log("✅ WhatsApp Connected")
-        }
     })
-}
 
     if (!pairedOnce) {
       pairedOnce = true
@@ -44,9 +42,6 @@ if (myJid) {
     image: { url: 'https://i.postimg.cc/SKWWycnC/2f219c4e-35ba-41b3-bb11-91fdfe78291f.jpg' },
     caption: '✅ Bot successfully paired & connected 🎉'
   })
-}
-    }
-  }
 
   if (connection === 'close') {
     if (lastDisconnect?.error?.output?.statusCode !== 401) {
@@ -58,7 +53,6 @@ if (myJid) {
     }
   }
 })
-
 
 startBot()
 
@@ -73,8 +67,7 @@ app.get("/qr", async (req, res) => {
         <h2>Scan WhatsApp QR</h2>
         <img src="${qrImage}" />
         <script>setTimeout(()=>location.reload(),3000)</script>
-    `)
-})
+    )
 
 app.listen(3000, () => {
     console.log("🌐 Open http://localhost:3000/qr")
