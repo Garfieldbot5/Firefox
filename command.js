@@ -1,20 +1,21 @@
-var commands = [];
+module.exports = async (sock, msg) => {
+  const text =
+    msg.message?.conversation ||
+    msg.message?.extendedTextMessage?.text
 
-function cmd(info, func) {
-    var data = info;
-    data.function = func;
-    if (!data.dontAddCommandList) data.dontAddCommandList = false;
-    if (!info.desc) info.desc = '';
-    if (!data.fromMe) data.fromMe = false;
-    if (!info.category) data.category = 'misc';
-    if(!info.filename) data.filename = "Not Provided";
-    commands.push(data);
-    return data;
+  if (!text) return
+
+  console.log('📩 COMMAND TEXT:', text)
+
+  if (text === '!ping') {
+    await sock.sendMessage(msg.key.remoteJid, {
+      text: 'pong 🏓'
+    })
+  }
+
+  if (text === '!menu') {
+    await sock.sendMessage(msg.key.remoteJid, {
+      text: '🤖 Menu\n!ping\n!menu'
+    })
+  }
 }
-module.exports = {
-    cmd,
-    AddCommand:cmd,
-    Function:cmd,
-    Module:cmd,
-    commands,
-};
