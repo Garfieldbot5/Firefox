@@ -1,38 +1,42 @@
+let pairedOnce = false
+
 import commandHandler from './command.js'
 import makeWASocket, { useMultiFileAuthState } from '@whiskeysockets/baileys'
 
 console.log('🔥 index.js loaded')
 
 async function startBot() {
-  // 🔐 Auth session
+  
   const { state, saveCreds } = await useMultiFileAuthState('./session')
 
-  // 🔌 Create socket
+ 
   const sock = makeWASocket({
     auth: state,
     printQRInTerminal: true
   })
 
-  // 💾 Save session
+  
   sock.ev.on('creds.update', saveCreds)
 
-  // 🔄 Connection status
-  sock.ev.on('connection.update', ({ connection }) => {
-    if (connection === 'open') {
-      console.log('✅ WhatsApp connected')
+  sock.ev.on('connection.update', (update) => {
+  const { connection, lastDisconnect } = update
+
+  if (connection === 'open') {
+    console.log('✅ WhatsApp connected')
+  }
+
+  if (connection === 'close') {
+    console.log('❌ Connection closed')
+
+    
+    if (lastDisconnect?.error?.output?.statusCode !== 401) {
+      console.log('🔄 Reconnecting...')
+      startBot()
+    } else {
+      console.log('⚠️ Logged out. Scan QR again.')
     }
-  })
+  }
+})
 
-  // 📩 MESSAGE HANDLER (PASTE HERE)
-  sock.ev.on('messages.upsert', async ({ messages }) => {
-    const msg = messages[0]
-    if (!msg || !msg.message || msg.key.fromMe) return
 
-    console.log('📩 Message received')
-
-    await commandHandler(sock, msg)
-  })
-}
-
-// ▶️ Start bot
 startBot()
