@@ -1,21 +1,30 @@
 module.exports = async (sock, msg) => {
   const text =
     msg.message?.conversation ||
-    msg.message?.extendedTextMessage?.text
+    msg.message?.extendedTextMessage?.text ||
+    msg.message?.imageMessage?.caption ||
+    msg.message?.videoMessage?.caption
 
   if (!text) return
 
-  console.log('📩 COMMAND TEXT:', text)
+  console.log('📩 Received:', text)
 
-  if (text === '!ping') {
+  // prefix
+  const prefix = ','
+  if (!text.startsWith(prefix)) return
+
+  const command = text.slice(1).trim().toLowerCase()
+
+  // 🧩 COMMANDS
+  if (command === 'ping') {
     await sock.sendMessage(msg.key.remoteJid, {
       text: 'pong 🏓'
     })
   }
 
-  if (text === '!menu') {
+  else if (command === 'menu') {
     await sock.sendMessage(msg.key.remoteJid, {
-      text: '🤖 Menu\n!ping\n!menu'
+      text: '🤖 Menu\n\n!ping\n!menu'
     })
   }
 }
