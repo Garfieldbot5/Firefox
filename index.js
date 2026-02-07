@@ -85,6 +85,7 @@ sock.ev.on("connection.update", async ({ connection }) => {
   }
 })
 
+
     if (
       connection === "connecting" &&
       !sock.authState.creds.registered &&
