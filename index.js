@@ -9,6 +9,7 @@ const rl = readline.createInterface({
 
 let sentOnce = false
 let asked = false
+let paired = false
 
 async function startBot(printQR = false) {
   console.log("🚀 Starting WhatsApp bot...")
@@ -23,6 +24,7 @@ async function startBot(printQR = false) {
 
   sock.ev.on("creds.update", saveCreds)
 
+
   sock.ev.on("messages.upsert", async ({ messages }) => {
     const msg = messages[0]
     if (!msg?.message) return
@@ -32,8 +34,6 @@ async function startBot(printQR = false) {
       msg.message.conversation ||
       msg.message.extendedTextMessage?.text
 
-    if (!text) return
-
     if (text === ".alive") {
       await sock.sendMessage(msg.key.remoteJid, {
         text: "✅ Firefox bot is alive"
@@ -41,49 +41,8 @@ async function startBot(printQR = false) {
     }
   })
 
-let paired = false
 
-sock.ev.on("connection.update", async ({ connection }) => {
-
-  if (
-    connection === "connecting" &&
-    !sock.authState.creds.registered &&
-    !asked
-  ) {
-    asked = true
-
-    setTimeout(() => {
-      rl.question(
-        "📱 Enter WhatsApp number (countrycode + number): ",
-        async (number) => {
-          try {
-            const code = await sock.requestPairingCode(number.trim())
-            console.log("\n🔢 PAIR CODE:", code)
-            console.log("⏳ Waiting for you to link the device...")
-            rl.close()
-          } catch {
-            console.log("❌ Pair code failed → use QR")
-            rl.close()
-          }
-        }
-      )
-    }, 3000)
-  }
-
-  if (connection === "open" && sock.authState.creds.registered) {
-    if (!paired) {
-      paired = true
-      console.log("✅ Device linked successfully")
-
-      const myJid = sock.user?.id
-      if (myJid) {
-        await sock.sendMessage(myJid, {
-          text: "❤ Firefox connected successfully"
-        })
-      }
-    }
-  }
-})
+  sock.ev.on("connection.update", async ({ connection }) => {
 
 
     if (
@@ -99,12 +58,12 @@ sock.ev.on("connection.update", async ({ connection }) => {
           "📱 Enter WhatsApp number (countrycode + number): ",
           async (number) => {
             try {
-              console.log("🔗 Trying pairing code...")
               const code = await sock.requestPairingCode(number.trim())
               console.log("\n🔢 PAIR CODE:", code)
               console.log("📲 WhatsApp → Linked Devices → Link with phone number")
+              console.log("⏳ Waiting for device to link...")
               rl.close()
-            } catch (err) {
+            } catch {
               console.log("❌ Pair code failed → switching to QR")
               rl.close()
               sock.end()
@@ -114,7 +73,25 @@ sock.ev.on("connection.update", async ({ connection }) => {
         )
       }, 3000)
     }
-  }
+
+
+    if (connection === "open" && sock.authState.creds.registered) {
+      if (!paired) {
+        paired = true
+        console.log("✅ Device linked successfully")
+
+        if (!sentOnce) {
+          sentOnce = true
+          const myJid = sock.user?.id
+          if (myJid) {
+            await sock.sendMessage(myJid, {
+              text: "❤ Firefox connected successfully"
+            })
+          }
+        }
+      }
+    }
+  })
 }
 
 startBot()
