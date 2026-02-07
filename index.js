@@ -7,48 +7,50 @@ const rl = readline.createInterface({
   output: process.stdout
 })
 
-async function startBot() {
+let sentOnce = false
+let asked = false
+
+async function startBot(printQR = false) {
   console.log("🚀 Starting WhatsApp bot...")
 
   const { state, saveCreds } = await useMultiFileAuthState("./session")
 
-  let useQR = false
-  let asked = false
-
   const sock = makeWASocket({
     auth: state,
-    printQRInTerminal: false, // QR disabled initially
+    printQRInTerminal: printQR,
     logger: pino({ level: "silent" })
   })
 
   sock.ev.on("creds.update", saveCreds)
 
   sock.ev.on("connection.update", async ({ connection }) => {
+
+    // ✅ CONNECTED
     if (connection === "open") {
       console.log("✅ WhatsApp connected")
-      return
-    }
-     if (!sentOnce) {
-      sentOnce = true
 
-      const myJid = sock.user?.id
-      if (myJid) {
-        setTimeout(async () => {
-          await sock.sendMessage(myJid, {
-            text: "❤ Firefox connected successfully"
-          })
-        }, 2000)
+      if (!sentOnce) {
+        sentOnce = true
+        const myJid = sock.user?.id
+        if (myJid) {
+          setTimeout(async () => {
+            await sock.sendMessage(myJid, {
+              text: "❤ Firefox connected successfully"
+            })
+          }, 2000)
+        }
       }
     }
-    
+
+    // 🔗 TRY PAIR CODE
     if (
       connection === "connecting" &&
       !sock.authState.creds.registered &&
-      !asked
+      !asked &&
+      !printQR
     ) {
       asked = true
 
-      // give WhatsApp time to handshake
       setTimeout(() => {
         rl.question(
           "📱 Enter WhatsApp number (countrycode + number): ",
@@ -60,21 +62,13 @@ async function startBot() {
               console.log("📲 WhatsApp → Linked Devices → Link with phone number")
               rl.close()
             } catch (err) {
-              console.log("❌ Pair code failed, switching to QR...")
+              console.log("❌ Pair code failed → switching to QR")
 
-              useQR = true
               rl.close()
-
-              // recreate socket with QR enabled
               sock.end()
 
-              const qrSock = makeWASocket({
-                auth: state,
-                printQRInTerminal: true,
-                logger: pino({ level: "silent" })
-              })
-
-              qrSock.ev.on("creds.update", saveCreds)
+              // 🔄 restart bot with QR
+              startBot(true)
             }
           }
         )
