@@ -114,7 +114,7 @@ sock.ev.on("connection.update", async ({ connection }) => {
         )
       }, 3000)
     }
-  })
+  }
 }
 
 startBot()
