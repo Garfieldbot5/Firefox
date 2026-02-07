@@ -23,9 +23,6 @@ async function startBot(printQR = false) {
 
   sock.ev.on("creds.update", saveCreds)
 
-  // ===============================
-  // ✅ SELF COMMAND HANDLER
-  // ===============================
   sock.ev.on("messages.upsert", async ({ messages }) => {
     const msg = messages[0]
     if (!msg?.message) return
@@ -44,14 +41,10 @@ async function startBot(printQR = false) {
     }
   })
 
-  // ===============================
-  // 🔌 CONNECTION HANDLER
-  // ===============================
 let paired = false
 
 sock.ev.on("connection.update", async ({ connection }) => {
 
-  // 🔗 PAIR CODE (NOT CONNECTED YET)
   if (
     connection === "connecting" &&
     !sock.authState.creds.registered &&
@@ -77,7 +70,6 @@ sock.ev.on("connection.update", async ({ connection }) => {
     }, 3000)
   }
 
-  // ✅ REAL CONNECTION (AFTER LINKING)
   if (connection === "open" && sock.authState.creds.registered) {
     if (!paired) {
       paired = true
@@ -93,7 +85,6 @@ sock.ev.on("connection.update", async ({ connection }) => {
   }
 })
 
-    // 🔗 PAIR CODE FLOW
     if (
       connection === "connecting" &&
       !sock.authState.creds.registered &&
