@@ -12,7 +12,6 @@ async function startBot() {
 
   const { state, saveCreds } = await useMultiFileAuthState("./session")
 
-  // 🔹 Ask number FIRST so terminal responds
   const number = await new Promise(resolve => {
     rl.question(
       "📱 Enter WhatsApp number (countrycode + number): ",
@@ -23,7 +22,7 @@ async function startBot() {
   const sock = makeWASocket({
     auth: state,
     printQRInTerminal: false,
-    logger: pino({ level: "silent" }) // 🔕 silent logs
+    logger: pino({ level: "silent" })
   })
 
   sock.ev.on("creds.update", saveCreds)
@@ -31,15 +30,14 @@ async function startBot() {
   let requested = false
 
   sock.ev.on("connection.update", async ({ connection }) => {
-    // 🔗 Generate pair code only once
+    
     if (
       connection === "open" &&
       !requested &&
       !sock.authState.creds.registered
     ) {
       requested = true
-
-      // ⏳ let WhatsApp finish handshake
+      
       setTimeout(async () => {
         try {
           const code = await sock.requestPairingCode(number)
@@ -50,8 +48,7 @@ async function startBot() {
         }
       }, 3000)
     }
-
-    // ✅ Already paired
+    
     if (connection === "open" && sock.authState.creds.registered) {
       console.log("✅ Already paired & connected")
       rl.close()
