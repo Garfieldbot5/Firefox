@@ -27,33 +27,22 @@ async function startBot() {
 
   sock.ev.on("creds.update", saveCreds)
 
-  let requested = false
-
-  sock.ev.on("connection.update", async ({ connection }) => {
-    
-    if (
-      connection === "open" &&
-      !requested &&
-      !sock.authState.creds.registered
-    ) {
-      requested = true
-      
-      setTimeout(async () => {
-        try {
-          const code = await sock.requestPairingCode(number)
-          console.log("\n🔢 PAIR CODE:", code)
-          console.log("📲 WhatsApp → Linked Devices → Link with phone number")
-        } catch (e) {
-          console.log("❌ Failed to generate pairing code:", e.message)
-        }
-      }, 3000)
-    }
-    
-    if (connection === "open" && sock.authState.creds.registered) {
-      console.log("✅ Already paired & connected")
+  // ⏳ IMPORTANT: wait a bit, then request pairing
+  setTimeout(async () => {
+    try {
+      if (!sock.authState.creds.registered) {
+        const code = await sock.requestPairingCode(number)
+        console.log("\n🔢 PAIR CODE:", code)
+        console.log("📲 WhatsApp → Linked Devices → Link with phone number")
+      } else {
+        console.log("✅ Already paired")
+      }
+    } catch (e) {
+      console.log("❌ Failed to generate pairing code:", e.message)
+    } finally {
       rl.close()
     }
-  })
+  }, 2000)
 }
 
 startBot()
