@@ -16,8 +16,6 @@ export default async function commandHandler(sock, msg) {
 const delay = Math.floor(Math.random() * 1000) + 800
 await new Promise(r => setTimeout(r, delay))
 
-
-  // 🧾 MENU
   if (command === 'menu') {
     const menu = `
 🤖 *Firefox Bot Menu*
@@ -44,12 +42,10 @@ Contact - wa/me+94775473247
     await sock.sendMessage(jid, { text: menu })
   }
 
-  // 🏓 PING
   else if (command === 'ping') {
     await sock.sendMessage(jid, { text: 'pong 🏓' })
   }
 
-  // ❤️ ALIVE
   else if (command === 'alive') {
     await sock.sendMessage(jid, {
       image: { url: process.env.ALIVE_IMG || 'https://i.postimg.cc/SKWWycnC/2f219c4e-35ba-41b3-bb11-91fdfe78291f.jpg' },
@@ -57,7 +53,6 @@ Contact - wa/me+94775473247
     })
   }
 
-  // 🌐 SOCIAL COMMANDS
   else if (command === 'yt') {
     await sock.sendMessage(jid, { text: '📺 YouTube: https://youtube.com/@yourchannel' })
   }
@@ -79,7 +74,6 @@ Contact - wa/me+94775473247
   }
 }
 
-// 🔐 PRIVATE CHAT ONLY
  else if (command === 'botprivate') {
   if (!isOwner) return
 
@@ -94,8 +88,6 @@ else if (command === 'botpublic') {
   await sock.sendMessage(jid, { text: '🔓 Bot is now PUBLIC' })
 }
 
-
-  // 👑 OWNER ONLY
   else if (command === 'shutdown') {
     if (!isOwner) {
       return sock.sendMessage(jid, {
