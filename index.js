@@ -42,6 +42,14 @@ async function startBot() {
       console.log("❌ Pairing failed:", e.message)
     } finally {
       rl.close()
+
+       process.on("SIGINT", async () => {
+    console.log("\n🔓 Logging out WhatsApp...")
+    try {
+      await sock.logout()
+    } catch {}
+    process.exit(0)
+  })
     }
   }, 5000) // ⬅️ IMPORTANT
 }
