@@ -22,6 +22,28 @@ async function startBot(printQR = false) {
   })
 
   sock.ev.on("creds.update", saveCreds)
+  
+  sock.ev.on("messages.upsert", async ({ messages }) => {
+    const msg = messages[0]
+    if (!msg?.message) return
+
+    // only messages sent by YOU
+    if (!msg.key.fromMe) return
+
+    const text =
+      msg.message.conversation ||
+      msg.message.extendedTextMessage?.text
+
+    if (!text) return
+
+    if (text === ".alive") {
+      await sock.sendMessage(msg.key.remoteJid, {
+        text: "✅ Bot is alive"
+      })
+    }
+  })
+
+  sock.ev.on("connection.update", async ({ connection }) => {
 
   sock.ev.on("connection.update", async ({ connection }) => {
 
