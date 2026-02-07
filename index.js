@@ -47,24 +47,51 @@ async function startBot(printQR = false) {
   // ===============================
   // 🔌 CONNECTION HANDLER
   // ===============================
-  sock.ev.on("connection.update", async ({ connection }) => {
+let paired = false
 
-    if (connection === "open") {
-      console.log("✅ WhatsApp connected")
+sock.ev.on("connection.update", async ({ connection }) => {
 
-      if (!sentOnce) {
-        sentOnce = true
-        const myJid = sock.user?.id
+  // 🔗 PAIR CODE (NOT CONNECTED YET)
+  if (
+    connection === "connecting" &&
+    !sock.authState.creds.registered &&
+    !asked
+  ) {
+    asked = true
 
-        if (myJid) {
-          setTimeout(async () => {
-            await sock.sendMessage(myJid, {
-              text: "❤ Firefox connected successfully"
-            })
-          }, 2000)
+    setTimeout(() => {
+      rl.question(
+        "📱 Enter WhatsApp number (countrycode + number): ",
+        async (number) => {
+          try {
+            const code = await sock.requestPairingCode(number.trim())
+            console.log("\n🔢 PAIR CODE:", code)
+            console.log("⏳ Waiting for you to link the device...")
+            rl.close()
+          } catch {
+            console.log("❌ Pair code failed → use QR")
+            rl.close()
+          }
         }
+      )
+    }, 3000)
+  }
+
+  // ✅ REAL CONNECTION (AFTER LINKING)
+  if (connection === "open" && sock.authState.creds.registered) {
+    if (!paired) {
+      paired = true
+      console.log("✅ Device linked successfully")
+
+      const myJid = sock.user?.id
+      if (myJid) {
+        await sock.sendMessage(myJid, {
+          text: "❤ Firefox connected successfully"
+        })
       }
     }
+  }
+})
 
     // 🔗 PAIR CODE FLOW
     if (
