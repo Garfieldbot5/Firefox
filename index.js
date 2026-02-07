@@ -12,46 +12,75 @@ async function startBot() {
 
   const { state, saveCreds } = await useMultiFileAuthState("./session")
 
-  const number = await new Promise(resolve => {
-    rl.question(
-      "📱 Enter WhatsApp number (countrycode + number): ",
-      answer => resolve(answer.replace(/\D/g, ""))
-    )
-  })
+  let useQR = false
+  let asked = false
 
   const sock = makeWASocket({
     auth: state,
-    printQRInTerminal: false,
-    logger: pino({ level: "silent" }),
-    browser: ["Ubuntu", "Chrome", "22.04.4"] // REQUIRED
+    printQRInTerminal: false, // QR disabled initially
+    logger: pino({ level: "silent" })
   })
 
   sock.ev.on("creds.update", saveCreds)
 
-  // ⏳ WAIT LONGER — THIS FIXES "WRONG CODE"
-  setTimeout(async () => {
-    try {
-      if (!sock.authState.creds.registered) {
-        const code = await sock.requestPairingCode(number)
-        console.log("\n🔢 PAIR CODE:", code)
-        console.log("📲 WhatsApp → Linked Devices → Link with phone number")
-      } else {
-        console.log("✅ Already paired")
-      }
-    } catch (e) {
-      console.log("❌ Pairing failed:", e.message)
-    } finally {
-      rl.close()
-
-       process.on("SIGINT", async () => {
-    console.log("\n🔓 Logging out WhatsApp...")
-    try {
-      await sock.logout()
-    } catch {}
-    process.exit(0)
-  })
+  sock.ev.on("connection.update", async ({ connection }) => {
+    if (connection === "open") {
+      console.log("✅ WhatsApp connected")
+      return
     }
-  }, 5000) // ⬅️ IMPORTANT
+     if (!sentOnce) {
+      sentOnce = true
+
+      const myJid = sock.user?.id
+      if (myJid) {
+        setTimeout(async () => {
+          await sock.sendMessage(myJid, {
+            text: "❤ Firefox connected successfully"
+          })
+        }, 2000)
+      }
+    }
+    
+    if (
+      connection === "connecting" &&
+      !sock.authState.creds.registered &&
+      !asked
+    ) {
+      asked = true
+
+      // give WhatsApp time to handshake
+      setTimeout(() => {
+        rl.question(
+          "📱 Enter WhatsApp number (countrycode + number): ",
+          async (number) => {
+            try {
+              console.log("🔗 Trying pairing code...")
+              const code = await sock.requestPairingCode(number.trim())
+              console.log("\n🔢 PAIR CODE:", code)
+              console.log("📲 WhatsApp → Linked Devices → Link with phone number")
+              rl.close()
+            } catch (err) {
+              console.log("❌ Pair code failed, switching to QR...")
+
+              useQR = true
+              rl.close()
+
+              // recreate socket with QR enabled
+              sock.end()
+
+              const qrSock = makeWASocket({
+                auth: state,
+                printQRInTerminal: true,
+                logger: pino({ level: "silent" })
+              })
+
+              qrSock.ev.on("creds.update", saveCreds)
+            }
+          }
+        )
+      }, 3000)
+    }
+  })
 }
 
 startBot()
