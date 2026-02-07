@@ -22,12 +22,13 @@ async function startBot(printQR = false) {
   })
 
   sock.ev.on("creds.update", saveCreds)
-  
+
+  // ===============================
+  // ✅ SELF COMMAND HANDLER
+  // ===============================
   sock.ev.on("messages.upsert", async ({ messages }) => {
     const msg = messages[0]
     if (!msg?.message) return
-
-    // only messages sent by YOU
     if (!msg.key.fromMe) return
 
     const text =
@@ -38,22 +39,23 @@ async function startBot(printQR = false) {
 
     if (text === ".alive") {
       await sock.sendMessage(msg.key.remoteJid, {
-        text: "✅ Bot is alive"
+        text: "✅ Firefox bot is alive"
       })
     }
   })
 
+  // ===============================
+  // 🔌 CONNECTION HANDLER
+  // ===============================
   sock.ev.on("connection.update", async ({ connection }) => {
 
-  sock.ev.on("connection.update", async ({ connection }) => {
-
-    // ✅ CONNECTED
     if (connection === "open") {
       console.log("✅ WhatsApp connected")
 
       if (!sentOnce) {
         sentOnce = true
         const myJid = sock.user?.id
+
         if (myJid) {
           setTimeout(async () => {
             await sock.sendMessage(myJid, {
@@ -64,7 +66,7 @@ async function startBot(printQR = false) {
       }
     }
 
-    // 🔗 TRY PAIR CODE
+    // 🔗 PAIR CODE FLOW
     if (
       connection === "connecting" &&
       !sock.authState.creds.registered &&
@@ -85,11 +87,8 @@ async function startBot(printQR = false) {
               rl.close()
             } catch (err) {
               console.log("❌ Pair code failed → switching to QR")
-
               rl.close()
               sock.end()
-
-              // 🔄 restart bot with QR
               startBot(true)
             }
           }
