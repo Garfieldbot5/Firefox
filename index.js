@@ -15,19 +15,20 @@ async function startBot() {
   const number = await new Promise(resolve => {
     rl.question(
       "📱 Enter WhatsApp number (countrycode + number): ",
-      answer => resolve(answer.trim())
+      answer => resolve(answer.replace(/\D/g, ""))
     )
   })
 
   const sock = makeWASocket({
     auth: state,
     printQRInTerminal: false,
-    logger: pino({ level: "silent" })
+    logger: pino({ level: "silent" }),
+    browser: ["Ubuntu", "Chrome", "22.04.4"] // REQUIRED
   })
 
   sock.ev.on("creds.update", saveCreds)
 
-  // ⏳ IMPORTANT: wait a bit, then request pairing
+  // ⏳ WAIT LONGER — THIS FIXES "WRONG CODE"
   setTimeout(async () => {
     try {
       if (!sock.authState.creds.registered) {
@@ -38,11 +39,11 @@ async function startBot() {
         console.log("✅ Already paired")
       }
     } catch (e) {
-      console.log("❌ Failed to generate pairing code:", e.message)
+      console.log("❌ Pairing failed:", e.message)
     } finally {
       rl.close()
     }
-  }, 2000)
+  }, 5000) // ⬅️ IMPORTANT
 }
 
 startBot()
